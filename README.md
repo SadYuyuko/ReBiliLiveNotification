@@ -1,5 +1,5 @@
 # Re: BiliLiveNotification
-## B站直播开播提醒 - 重制版
+## Re：B站直播开播提醒
 [exe单文件](https://github.com/SadYuyuko/biliLiveNotification/releases/download/v1.1/Re.BiliLiveNotification.exe)  
 
 修改内容：  
