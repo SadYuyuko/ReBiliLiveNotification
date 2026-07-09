@@ -18,7 +18,7 @@
 3.直播通知弹窗默认10分钟后未点击自动关闭  
   
 ## 软件界面  
-<img width="300" height="455" alt="sshot-2026-02-11-16-07-00" src="https://github.com/user-attachments/assets/e233c8e8-52d4-4d6c-b45d-a42a9756f865" />  
-
----  
-<img width="250" height="175" alt="sshot-2026-02-11-16-06-04" src="https://github.com/user-attachments/assets/cad2897a-b9de-4b7a-aec4-6e8032afb577" />  
+<img width="300" height="474" alt="1" src="https://github.com/user-attachments/assets/36bd72cc-3282-40b7-9e02-f8210af82340" />
+<br>
+<br>
+<img width="250" height="172" alt="2" src="https://github.com/user-attachments/assets/ff246456-ad76-403c-a51c-3a4dfe58f524" />
