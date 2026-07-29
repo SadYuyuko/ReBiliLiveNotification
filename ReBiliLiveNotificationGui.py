@@ -1,6 +1,6 @@
 import tkinter as tk
 import ttkbootstrap as ttk
-import ttkbootstrap.dialogs.dialogs as tkmb
+from ttkbootstrap.dialogs import Messagebox as tkmb
 import tkinter.font as tkfont
 import webbrowser
 from retrying import retry
@@ -22,7 +22,10 @@ import pythoncom
 import win32com.client
 from io import BytesIO
 import ctypes
+import urllib3
 from enum import IntEnum
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # 原作者 @yunhuanyx 
 # 原项目 https://github.com/yunhuanyx/biliLiveNotification
@@ -37,6 +40,8 @@ else:
 user_config_dir = os.path.join(os.path.expanduser('~'), '.ReBiliLiveNotification')
 os.makedirs(user_config_dir, exist_ok=True)
 config_path = os.path.join(user_config_dir, 'ReBLN.ini')
+
+APP_VERSION = "1.3"
 
 # UA
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0"}
@@ -99,12 +104,12 @@ def _append_log(message):
 # 关于
 def show_about_window():
     about_window = tk.Toplevel(root)
-    about_window.title("关于")
+    about_window.title(f"v{APP_VERSION}")
     about_window.resizable(False, False)
     about_window.attributes('-topmost', True)
     
-    window_width = 410
-    window_height = 300
+    window_width = 480
+    window_height = 330
     screen_width = about_window.winfo_screenwidth()
     screen_height = about_window.winfo_screenheight()
     x = (screen_width // 2) - (window_width // 2)
@@ -126,7 +131,7 @@ def show_about_window():
     text_scrollbar = ttk.Scrollbar(text_frame, bootstyle="round")
     text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     
-    about_text = tk.Text(text_frame, height=8, wrap=tk.WORD,
+    about_text = tk.Text(text_frame, height=6, wrap=tk.WORD,
                         font=("微软雅黑", 9),
                         yscrollcommand=text_scrollbar.set,
                         relief=tk.FLAT, bd=2, bg="#f0f0f0")
@@ -134,7 +139,8 @@ def show_about_window():
     
     about_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
     
-    about_content = f"""原作者 @yunhuanyx 
+    about_content = f"""版本 v{APP_VERSION}
+原作者 @yunhuanyx 
 原项目 https://github.com/yunhuanyx/biliLiveNotification
 Re版修改 https://github.com/SadYuyuko/biliLiveNotification
 配置文件位于 {config_path}
@@ -283,6 +289,37 @@ def show_window():
     root.lift()
     root.focus_force()
 
+def check_for_updates():
+    def _check():
+        try:
+            url = "https://api.github.com/repos/SadYuyuko/biliLiveNotification/releases/latest"
+            resp = state.session.get(url, headers=headers, timeout=10, verify=False)
+            resp.raise_for_status()
+            data = resp.json()
+            latest_tag = data['tag_name']
+            body = data.get('body', '').strip()
+            msg = f"最新版本: {latest_tag}"
+            if body:
+                msg += f"\n\n更新内容:\n{body}"
+            msg += "\n\n点击确定前往下载页面"
+
+            log(f"检查更新：发现版本 {latest_tag}")
+
+            def _ask(data=data, msg=msg, tag=latest_tag):
+                result = tkmb.show_question(title="检查更新", message=msg)
+                if result:
+                    webbrowser.open(data['html_url'])
+                    log(f"检查更新：已前往下载 {tag}")
+            root.after(0, _ask)
+
+        except Exception as e:
+            log(f"检查更新失败：{str(e)}")
+            def _error(e=e):
+                tkmb.show_error(title="检查更新", message=f"检查更新失败: {str(e)}")
+            root.after(0, _error)
+
+    threading.Thread(target=_check, daemon=True).start()
+
 def quit_window():
     for rid, win in state.notification_windows.items():
         if win and win.winfo_exists():
@@ -298,7 +335,7 @@ def begin_listen():
     room_id_text = room_id_entry.get('1.0', tk.END).strip()
     room_id_text = room_id_text.replace('，', ',').replace('\n', '').replace(' ', '')
     if not room_id_text:
-        root.after(0, lambda: tkmb.Messagebox.show_error(title="错误", message="房间号为空，请保存设置后再开始！"))
+        root.after(0, lambda: tkmb.show_error(title="错误", message="房间号为空，请保存设置后再开始！"))
         return
     
     roomID = [rid for rid in room_id_text.split(',') if rid]
@@ -570,20 +607,20 @@ def save_settings():
     if room_id_text:
         for rid in room_id_text.split(','):
             if not rid.isdigit():
-                tkmb.Messagebox.show_error(title="错误", message=f"房间号 {rid} 无效，必须为数字")
+                tkmb.show_error(title="错误", message=f"房间号 {rid} 无效，必须为数字")
                 return
 
     try:
         time_int = int(time_interval)
         if time_int < 10:
-            tkmb.Messagebox.show_error(title="错误", message="检测间隔不能小于10秒")
+            tkmb.show_error(title="错误", message="检测间隔不能小于10秒")
             return
     except ValueError:
-        tkmb.Messagebox.show_error(title="错误", message="检测间隔必须为数字")
+        tkmb.show_error(title="错误", message="检测间隔必须为数字")
         return
 
     if not api_url:
-        tkmb.Messagebox.show_error(title="错误", message="API不能为空")
+        tkmb.show_error(title="错误", message="API不能为空")
         return
 
     config = read_config()
@@ -609,9 +646,9 @@ def save_settings():
         else:
             success = True
     if success:
-        tkmb.Messagebox.show_info(title="成功", message="设置已保存")
+        tkmb.show_info(title="成功", message="设置已保存")
     else:
-        tkmb.Messagebox.show_warning(title="提示", message="设置已保存，但修改开机自启请以管理员运行！")
+        tkmb.show_warning(title="提示", message="设置已保存，但修改开机自启请以管理员运行！")
 
     load_table_data()
 
@@ -692,6 +729,16 @@ def delayed_startup():
         root.after(500, root.withdraw)
     if should_auto_listen:
         root.after(1500, begin_listen)
+
+def create_labeled_frame(parent, text):
+    frame = ttk.Frame(parent)
+    title_label = ttk.Label(frame, text=text, font=("微软雅黑", 9, "bold"))
+    title_label.pack(anchor="w", padx=6, pady=(4, 2))
+    separator = ttk.Separator(frame, orient="horizontal")
+    separator.pack(fill=tk.X, padx=0, pady=(0, 2))
+    content = ttk.Frame(frame)
+    content.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+    return frame, content
 
 if __name__ == "__main__":
     # 高DPI
@@ -849,11 +896,8 @@ if __name__ == "__main__":
                                       variable=auto_jump_var)
     auto_jump_check.grid(row=0, column=0)
     
-    room_settings_frame = ttk.LabelFrame(root, text="检测设置")
+    room_settings_frame, room_settings_inner = create_labeled_frame(root, "检测设置")
     room_settings_frame.pack(fill=tk.X, padx=6, pady=(0, 6))
-    
-    room_settings_inner = ttk.Frame(room_settings_frame)
-    room_settings_inner.pack(padx=6, pady=6, fill=tk.BOTH, expand=True)
     
     room_id_frame = ttk.Frame(room_settings_inner)
     room_id_frame.pack(fill=tk.X)
@@ -869,27 +913,24 @@ if __name__ == "__main__":
     api_frame = ttk.Frame(room_settings_inner)
     api_frame.pack(fill=tk.X, pady=(6, 0))
     
-    api_label = ttk.Label(api_frame, text="API网址:")
+    api_label = ttk.Label(api_frame, text="API:")
     api_label.pack(side=tk.LEFT, anchor="w")
     
     api_var = tk.StringVar(value="https://api.live.bilibili.com/room/v1/Room/room_init?id=")
-    api_entry = ttk.Entry(api_frame, textvariable=api_var, width=30, font=("微软雅黑", 9))
+    api_entry = ttk.Entry(api_frame, textvariable=api_var, font=("微软雅黑", 9))
     api_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 5))
     
     def restore_default_api():
         api_var.set("https://api.live.bilibili.com/room/v1/Room/room_init?id=")
         log("已恢复默认API")
     
-    restore_api_btn = ttk.Button(api_frame, text="默认", width=8,
+    restore_api_btn = ttk.Button(api_frame, text="默认", width=5,
                                 command=restore_default_api, bootstyle="secondary-outline")
     restore_api_btn.pack(side=tk.RIGHT)
     
     # 直播间状态
-    table_frame = ttk.LabelFrame(root, text="直播间状态")
+    table_frame, table_inner = create_labeled_frame(root, "直播间状态")
     table_frame.pack(fill=tk.BOTH, expand=True, padx=6, pady=(0, 6))
-    
-    table_inner = ttk.Frame(table_frame)
-    table_inner.pack(padx=2, pady=2, fill=tk.BOTH, expand=True)
     
     table_container = ttk.Frame(table_inner)
     table_container.pack(fill=tk.BOTH, expand=True)
@@ -971,11 +1012,8 @@ if __name__ == "__main__":
     tree.configure(xscrollcommand=None)
     
     # 运行日志
-    log_frame = ttk.LabelFrame(root, text="运行日志")
+    log_frame, log_inner = create_labeled_frame(root, "运行日志")
     log_frame.pack(fill=tk.X, padx=6, pady=(0, 8))
-    
-    log_inner = ttk.Frame(log_frame)
-    log_inner.pack(padx=2, pady=2, fill=tk.BOTH, expand=True)
     
     info_scr = ttk.Scrollbar(log_inner, bootstyle="round")
     info_text = tk.Text(log_inner, height=8, bd=1,
@@ -998,6 +1036,8 @@ if __name__ == "__main__":
     
     # 托盘菜单
     menu = (MenuItem('显示', show_window, default=True), 
+            MenuItem('检查更新', check_for_updates),
+            Menu.SEPARATOR, 
             MenuItem('关于', show_about_window),
             Menu.SEPARATOR, 
             MenuItem('退出', quit_window))
