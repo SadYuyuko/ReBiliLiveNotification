@@ -3,7 +3,7 @@
 [Windows](https://github.com/SadYuyuko/biliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe) | [Android](https://github.com/SadYuyuko/biliLiveNotification/releases/download/Android_1.0/Re.BLN_Android_1.0.apk) 下载  
 
 修改内容：  
- - 计划任务开机自启
+ - 开机自启
  - 自动开始检测  
  - 自动跳转浏览器  
  - 适配高分屏  
