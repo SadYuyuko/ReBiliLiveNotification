@@ -1,6 +1,6 @@
 # Re: BiliLiveNotification
 ## Re：B站直播开播提醒
-[exe单文件](https://github.com/SadYuyuko/biliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe)  
+[Windows](https://github.com/SadYuyuko/biliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe)  
 
 修改内容：  
  - 使用计划任务开机自启  
