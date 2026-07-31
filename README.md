@@ -23,4 +23,4 @@
 <img width="250" height="172" alt="2" src="https://github.com/user-attachments/assets/ff246456-ad76-403c-a51c-3a4dfe58f524" />
 
 - Android  
-<img width="540" height="615" alt="3" src="https://github.com/user-attachments/assets/0f1a80d7-fc6c-46bc-ad48-a98e7063b8e3" />
+<img width="270" height="615" alt="3" src="https://github.com/user-attachments/assets/4a0d4e86-3a20-434c-91e3-7dc9c80280ec" />
