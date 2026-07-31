@@ -1,7 +1,11 @@
 package com.rebilive.notification
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,11 +47,55 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _importResult = MutableStateFlow<String?>(null)
     val importResult: StateFlow<String?> = _importResult
 
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
     init {
         LiveRepository.updateBaseUrl(settingsRepo.getApiUrl())
         if (settingsRepo.isServiceWasRunning()) {
-            startService()
+            startServiceQuietly()
         }
+        registerNetworkCallback()
+    }
+
+    private fun startServiceQuietly() {
+        try {
+            startService()
+        } catch (e: Exception) {
+            Log.w(TAG, "启动服务受限", e)
+        }
+    }
+
+    private fun registerNetworkCallback() {
+        val cm = getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (networkCallback != null) return
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                if (!settingsRepo.isServiceWasRunning()) return
+                try {
+                    startService()
+                } catch (e: Exception) {
+                    Log.w(TAG, "网络恢复拉起服务受限", e)
+                }
+            }
+        }
+        try {
+            cm.registerDefaultNetworkCallback(networkCallback!!)
+        } catch (e: Exception) {
+            Log.w(TAG, "注册网络回调失败", e)
+            networkCallback = null
+        }
+    }
+
+    override fun onCleared() {
+        networkCallback?.let {
+            try {
+                (getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager)
+                    .unregisterNetworkCallback(it)
+            } catch (_: Exception) {
+            }
+        }
+        networkCallback = null
+        super.onCleared()
     }
 
     fun saveSettings() {
@@ -184,5 +232,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearUpdateResult() {
         _updateCheckResult.value = null
+    }
+
+    companion object {
+        private const val TAG = "MainViewModel"
     }
 }

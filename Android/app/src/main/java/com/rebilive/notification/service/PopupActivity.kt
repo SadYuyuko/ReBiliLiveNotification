@@ -1,9 +1,11 @@
 package com.rebilive.notification.service
 
+import android.app.KeyguardManager
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.os.PowerManager
 import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
@@ -55,15 +57,35 @@ class PopupActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btn_open).setOnClickListener {
-            startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse("https://live.bilibili.com/$rid"))
-                    .setPackage("tv.danmaku.bili")
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
+            jumpToLive(rid)
             finish()
         }
 
         findViewById<MaterialButton>(R.id.btn_ignore).setOnClickListener { finish() }
+
+        if (intent.getBooleanExtra("autoJump", false)) {
+            window.decorView.post { maybeAutoJump(rid) }
+        }
+    }
+
+    private fun jumpToLive(rid: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://live.bilibili.com/$rid"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            intent.setPackage("tv.danmaku.bili")
+            startActivity(intent)
+        } catch (_: Exception) {
+            intent.setPackage(null)
+            startActivity(intent)
+        }
+    }
+
+    private fun maybeAutoJump(rid: String) {
+        val pm = getSystemService(PowerManager::class.java)
+        val km = getSystemService(KeyguardManager::class.java)
+        if (!pm.isInteractive || km.isKeyguardLocked) return
+        jumpToLive(rid)
+        finish()
     }
 
     override fun onDestroy() {

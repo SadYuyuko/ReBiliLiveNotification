@@ -1,7 +1,13 @@
 package com.rebilive.notification
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -10,13 +16,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import android.content.Intent
-import android.net.Uri
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -25,11 +32,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.rebilive.notification.notification.NotificationHelper
 
 class MainActivity : ComponentActivity() {
@@ -52,10 +60,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val ctx = LocalContext.current
-            val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                dynamicLightColorScheme(ctx)
-            } else {
-                lightColorScheme(primary = Color(0xFF00A1D6))
+            val darkTheme = isSystemInDarkTheme()
+            val colorScheme = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && darkTheme -> dynamicDarkColorScheme(ctx)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> dynamicLightColorScheme(ctx)
+                darkTheme -> darkColorScheme(
+                    primary = Color(0xFF00A1D6),
+                    secondary = Color(0xFF4FC3F7),
+                    tertiary = Color(0xFFFF9800)
+                )
+                else -> lightColorScheme(primary = Color(0xFF00A1D6))
             }
             MaterialTheme(colorScheme = colorScheme) {
                 MainScreen(viewModel)
@@ -184,23 +198,21 @@ fun MainScreen(viewModel: MainViewModel) {
                 Button(
                     onClick = { viewModel.toggleService() },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isServiceRunning) Color(0xFFFF9800) else Color(0xFF00A1D6)
+                        containerColor = if (isServiceRunning) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
+                        contentColor = if (isServiceRunning) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary
                     ),
-                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(if (isServiceRunning) "停止检测" else "开始检测")
                 }
                 OutlinedButton(
                     onClick = { viewModel.saveSettings() },
-                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("保存设置")
                 }
                 OutlinedButton(
                     onClick = { viewModel.refreshStatus() },
-                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("刷新状态")
@@ -210,31 +222,41 @@ fun MainScreen(viewModel: MainViewModel) {
             Spacer(Modifier.height(2.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Switch(
                         checked = notifyEnabled,
-                        onCheckedChange = { viewModel.setNotifyEnabled(it) },
-                        modifier = Modifier.scale(0.8f)
+                        onCheckedChange = { viewModel.setNotifyEnabled(it) }
                     )
                     Spacer(Modifier.width(4.dp))
                     Text("弹窗提醒", style = MaterialTheme.typography.bodySmall)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Switch(
                         checked = autoJumpEnabled,
-                        onCheckedChange = { viewModel.setAutoJumpEnabled(it) },
-                        modifier = Modifier.scale(0.8f)
+                        onCheckedChange = { viewModel.setAutoJumpEnabled(it) }
                     )
                     Spacer(Modifier.width(4.dp))
                     Text("自动跳转", style = MaterialTheme.typography.bodySmall)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Switch(
                         checked = autoStart,
-                        onCheckedChange = { viewModel.setAutoStart(it) },
-                        modifier = Modifier.scale(0.8f)
+                        onCheckedChange = { viewModel.setAutoStart(it) }
                     )
                     Spacer(Modifier.width(4.dp))
                     Text("开机自启", style = MaterialTheme.typography.bodySmall)
@@ -265,7 +287,8 @@ fun MainScreen(viewModel: MainViewModel) {
                     onValueChange = { viewModel.updateInterval(it) },
                     label = { Text("间隔(s)") },
                     modifier = Modifier.width(90.dp),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
 
@@ -279,26 +302,39 @@ fun MainScreen(viewModel: MainViewModel) {
                 singleLine = true
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
+
+            PermissionGuideCard()
+
+            Spacer(Modifier.height(8.dp))
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFE0E0E0))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .padding(8.dp)
                     ) {
-                        Text("主播", Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                        Text("房间号", Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                        Text("状态", Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                        Text("主播", Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                        Text("房间号", Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                        Text("状态", Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
                     }
                 }
                 items(roomStatusList, key = { it.roomId }) { status ->
                     Row(modifier = Modifier.padding(8.dp)) {
                         Text(status.uname, Modifier.weight(1f))
                         Text(status.roomId, Modifier.weight(1f))
-                        Text(status.status, Modifier.weight(1f))
+                        Text(
+                            text = status.status,
+                            modifier = Modifier.weight(1f),
+                            color = when (status.status) {
+                                "直播中" -> MaterialTheme.colorScheme.primary
+                                "获取失败", "网络错误" -> MaterialTheme.colorScheme.error
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                     HorizontalDivider()
                 }
@@ -314,7 +350,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 Column(Modifier.widthIn(max = 400.dp)) {
                     SelectionContainer {
                         Text(
-                            text = "版本 v1.1\n" +
+                            text = "版本 v1.2\n" +
                                     "原作者 @yunhuanyx\n" +
                                     "原项目: github.com/yunhuanyx/biliLiveNotification\n" +
                                     "Re版: github.com/SadYuyuko/ReBiliLiveNotification"
@@ -343,4 +379,96 @@ fun MainScreen(viewModel: MainViewModel) {
             }
         )
     }
+}
+
+@Composable
+fun PermissionGuideCard(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var resumeTick by remember { mutableStateOf(0) }
+    LifecycleResumeEffect(Unit) {
+        resumeTick++
+        onPauseOrDispose { }
+    }
+    resumeTick
+
+    var notifyGranted by remember { mutableStateOf(checkNotifyPermission(context)) }
+    val notifyLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> notifyGranted = granted }
+    val canOverlay = Settings.canDrawOverlays(context)
+    val canFullScreen = checkFullScreenPermission(context)
+
+    if (notifyGranted && canOverlay && canFullScreen) return
+
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("后台弹窗/自动跳转需要以下权限：", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            if (!notifyGranted) {
+                PermissionRow("通知权限", "用于弹出开播提醒") {
+                    notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+            if (!canOverlay) {
+                PermissionRow("悬浮窗权限", "用于后台自动跳转") {
+                    openOverlaySettings(context)
+                }
+            }
+            if (!canFullScreen) {
+                PermissionRow("全屏通知权限", "用于熄屏时弹出提醒") {
+                    openFullScreenSettings(context)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionRow(title: String, subtitle: String, onGrant: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 14.sp)
+            Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        TextButton(onClick = onGrant) { Text("去授权") }
+    }
+}
+
+private fun checkNotifyPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+        PackageManager.PERMISSION_GRANTED
+
+private fun checkFullScreenPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.USE_FULL_SCREEN_INTENT) ==
+        PackageManager.PERMISSION_GRANTED
+
+private fun openOverlaySettings(context: Context) {
+    val intent = try {
+        Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:${context.packageName}")
+        )
+    } catch (_: Exception) {
+        Intent(Settings.ACTION_SETTINGS)
+    }
+    context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}
+
+private fun openFullScreenSettings(context: Context) {
+    val intent = try {
+        Intent(
+            Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+            Uri.parse("package:${context.packageName}")
+        )
+    } catch (_: Exception) {
+        Intent(Settings.ACTION_SETTINGS)
+    }
+    context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
