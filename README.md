@@ -1,6 +1,6 @@
 # Re: BiliLiveNotification
 ## Re：B站直播开播提醒
-[Windows](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe) | [Android](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/a1.1/Re.BLN_Android_1.1.apk) 下载  
+[Windows](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe) | [Android](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/a1.2/Re.BLN_Android_1.2.apk) 下载  
 
 修改内容：  
  - 开机自启
@@ -10,7 +10,7 @@
  - 删除启动通知，因为系统推送会留下一长串通知记录...  
  - 将`.ini`配置文件存放至`C:\Users\用户名\.ReBiliLiveNotification\ReBLN.ini`  
  - 自定义API（好像用不到...）  
- - kotlin移植Android版：直接跳转B站APP直播间  
+ - kotlin移植Android版：直接跳转B站直播间界面  
 
 注意：  
 1.设置开机自启需要以管理员运行，移动.exe位置后要重新设置开机自启  
@@ -23,4 +23,4 @@
 <img width="250" height="172" alt="2" src="https://github.com/user-attachments/assets/ff246456-ad76-403c-a51c-3a4dfe58f524" />
 
 - Android  
-<img width="270" height="615" alt="3" src="https://github.com/user-attachments/assets/4a0d4e86-3a20-434c-91e3-7dc9c80280ec" />
+<img width="270" height="615" alt="3" src="https://github.com/user-attachments/assets/308efb96-8a15-4bb0-8b19-dc948f0c7975" />
