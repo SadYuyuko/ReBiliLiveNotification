@@ -24,6 +24,7 @@ class BiliLiveService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NotificationHelper.NOTIFY_ID_SERVICE, notificationHelper.getServiceNotification())
+        settingsRepo.setServiceWasRunning(true)
         startPolling()
         return START_STICKY
     }

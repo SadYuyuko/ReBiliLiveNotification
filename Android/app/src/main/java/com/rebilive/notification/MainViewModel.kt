@@ -1,6 +1,8 @@
 package com.rebilive.notification
 
 import android.app.Application
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.rebilive.notification.data.LiveRepository
@@ -25,6 +27,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val interval = MutableStateFlow(settingsRepo.getInterval().toString())
     val notifyEnabled = MutableStateFlow(settingsRepo.isNotifyEnabled())
     val autoJumpEnabled = MutableStateFlow(settingsRepo.isAutoJumpEnabled())
+    val apiUrl = MutableStateFlow(settingsRepo.getApiUrl())
+    val hideToBackground = MutableStateFlow(settingsRepo.isHideToBackground())
+    val autoStart = MutableStateFlow(settingsRepo.isAutoStart())
 
     private val _roomStatusList = MutableStateFlow<List<RoomStatus>>(emptyList())
     val roomStatusList: StateFlow<List<RoomStatus>> = _roomStatusList
@@ -35,10 +40,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _updateCheckResult = MutableStateFlow<UpdateCheckResult?>(null)
     val updateCheckResult: StateFlow<UpdateCheckResult?> = _updateCheckResult
 
+    private val _importResult = MutableStateFlow<String?>(null)
+    val importResult: StateFlow<String?> = _importResult
+
+    init {
+        LiveRepository.updateBaseUrl(settingsRepo.getApiUrl())
+        if (settingsRepo.isServiceWasRunning()) {
+            startService()
+        }
+    }
+
     fun saveSettings() {
         settingsRepo.saveRoomIds(
-            roomIds.value.replace("，", ",").split(",").map { it.trim() }.filter { it.isNotBlank() }
+            roomIds.value.replace("，", ",").split(",").map { it.trim() }.filter { it.isNotBlank() }.distinct()
         )
+        settingsRepo.saveApiUrl(apiUrl.value.ifBlank { SettingsRepository.DEFAULT_API_URL })
+        LiveRepository.updateBaseUrl(apiUrl.value.ifBlank { SettingsRepository.DEFAULT_API_URL })
         refreshStatus()
     }
 
@@ -52,22 +69,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepo.setAutoJumpEnabled(v)
     }
 
+    fun setHideToBackground(v: Boolean) {
+        hideToBackground.value = v
+        settingsRepo.setHideToBackground(v)
+    }
+
+    fun setAutoStart(v: Boolean) {
+        autoStart.value = v
+        settingsRepo.setAutoStart(v)
+    }
+
+    fun restoreDefaultApi() {
+        apiUrl.value = SettingsRepository.DEFAULT_API_URL
+    }
+
     fun updateInterval(value: String) {
         interval.value = value
         settingsRepo.saveInterval(value.toIntOrNull() ?: 20)
     }
 
     fun toggleService() {
-        val context = getApplication<Application>()
-        val intent = android.content.Intent(context, BiliLiveService::class.java)
         if (_isServiceRunning.value) {
-            context.stopService(intent)
-            _isServiceRunning.value = false
+            stopService()
         } else {
-            androidx.core.content.ContextCompat.startForegroundService(context, intent)
-            _isServiceRunning.value = true
-            refreshStatus()
+            startService()
         }
+    }
+
+    private fun startService() {
+        val context = getApplication<Application>()
+        val intent = Intent(context, BiliLiveService::class.java)
+        ContextCompat.startForegroundService(context, intent)
+        _isServiceRunning.value = true
+        settingsRepo.setServiceWasRunning(true)
+        refreshStatus()
+    }
+
+    private fun stopService() {
+        val context = getApplication<Application>()
+        val intent = Intent(context, BiliLiveService::class.java)
+        context.stopService(intent)
+        _isServiceRunning.value = false
+        settingsRepo.setServiceWasRunning(false)
     }
 
     fun refreshStatus() {
@@ -89,6 +132,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    fun exportSettings(): String = settingsRepo.exportToJson()
+
+    fun importSettings(json: String) {
+        try {
+            settingsRepo.importFromJson(json)
+            LiveRepository.updateBaseUrl(settingsRepo.getApiUrl())
+            roomIds.value = settingsRepo.getRoomIds().joinToString(",")
+            interval.value = settingsRepo.getInterval().toString()
+            notifyEnabled.value = settingsRepo.isNotifyEnabled()
+            autoJumpEnabled.value = settingsRepo.isAutoJumpEnabled()
+            apiUrl.value = settingsRepo.getApiUrl()
+            hideToBackground.value = settingsRepo.isHideToBackground()
+            autoStart.value = settingsRepo.isAutoStart()
+            _importResult.value = "导入成功"
+            refreshStatus()
+        } catch (e: Exception) {
+            _importResult.value = "导入失败: ${e.message}"
+        }
+    }
+
+    fun clearImportResult() {
+        _importResult.value = null
     }
 
     fun checkForUpdates() {
