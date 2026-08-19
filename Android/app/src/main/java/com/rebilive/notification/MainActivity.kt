@@ -134,6 +134,23 @@ fun MainScreen(viewModel: MainViewModel) {
                 }
                 if (json != null) {
                     viewModel.importSettings(json)
+                    if (viewModel.importResult.value == "导入成功") {
+                        val activity = context as? Activity
+                        if (activity != null) {
+                            val wantExcluded = viewModel.hideToBackground.value
+                            val isExcluded =
+                                (activity.intent.flags and Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) != 0
+                            if (wantExcluded != isExcluded) {
+                                activity.finish()
+                                activity.startActivity(
+                                    Intent(activity, MainActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        if (wantExcluded) addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "导入失败: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -425,8 +442,9 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
     ) { granted -> notifyGranted = granted }
     val canOverlay = Settings.canDrawOverlays(context)
     val canFullScreen = checkFullScreenPermission(context)
+    val needBgPopup = isChineseRom()
 
-    if (notifyGranted && canOverlay && canFullScreen) return
+    if (notifyGranted && canOverlay && canFullScreen && !needBgPopup) return
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -447,6 +465,11 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
             if (!canFullScreen) {
                 PermissionRow("全屏通知权限", "用于熄屏时弹出提醒") {
                     openFullScreenSettings(context)
+                }
+            }
+            if (needBgPopup) {
+                PermissionRow("后台弹出界面权限", "用于后台弹出开播提醒") {
+                    openBackgroundLaunchSettings(context)
                 }
             }
         }
@@ -499,4 +522,59 @@ private fun openFullScreenSettings(context: Context) {
         Intent(Settings.ACTION_SETTINGS)
     }
     context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}
+
+private fun isChineseRom(): Boolean =
+    systemProp("ro.miui.ui.version.name").isNotBlank() ||
+        systemProp("ro.build.version.emui").isNotBlank() ||
+        systemProp("ro.product.brand").lowercase().let {
+            it.contains("huawei") || it.contains("honor") || it.contains("xiaomi") ||
+                it.contains("oppo") || it.contains("oneplus") || it.contains("vivo") ||
+                it.contains("meizu")
+        }
+
+private fun systemProp(name: String): String = try {
+    Class.forName("android.os.SystemProperties")
+        .getMethod("get", String::class.java)
+        .invoke(null, name) as String
+} catch (_: Exception) {
+    ""
+}
+
+private fun openBackgroundLaunchSettings(context: Context) {
+    val fallback = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.parse("package:${context.packageName}")
+    )
+    val intent = try {
+        when {
+            systemProp("ro.miui.ui.version.name").isNotBlank() ->
+                Intent("miui.intent.action.APP_PERM_EDITOR").apply {
+                    setClassName(
+                        "com.miui.securitycenter",
+                        "com.miui.permcenter.permissions.PermissionsEditorActivity"
+                    )
+                    putExtra("extra_pkgname", context.packageName)
+                }
+            systemProp("ro.build.version.emui").isNotBlank() ->
+                Intent().apply {
+                    setClassName(
+                        "com.huawei.systemmanager",
+                        "com.huawei.permissionmanager.ui.MainActivity"
+                    )
+                    putExtra("packageName", context.packageName)
+                }
+            else -> fallback
+        }
+    } catch (_: Exception) {
+        fallback
+    }
+    try {
+        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: Exception) {
+        try {
+            context.startActivity(fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+        }
+    }
 }
