@@ -204,7 +204,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _updateCheckResult.value = null
             try {
                 val json = withContext(Dispatchers.IO) {
-                    URL("https://api.github.com/repos/SadYuyuko/biliLiveNotification/releases/latest")
+                    URL("https://api.github.com/repos/SadYuyuko/ReBiliLiveNotification/releases/latest")
                         .openStream().bufferedReader().use { it.readText() }
                 }
                 val obj = JSONObject(json)
