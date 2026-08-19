@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -443,8 +444,9 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
     val canOverlay = Settings.canDrawOverlays(context)
     val canFullScreen = checkFullScreenPermission(context)
     val needBgPopup = isChineseRom()
+    var dismissed by rememberSaveable { mutableStateOf(false) }
 
-    if (notifyGranted && canOverlay && canFullScreen && !needBgPopup) return
+    if (dismissed || (notifyGranted && canOverlay && canFullScreen && !needBgPopup)) return
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -453,31 +455,43 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
         ) {
             Text("后台弹窗/自动跳转需要以下权限：", fontWeight = FontWeight.Bold, fontSize = 14.sp)
             if (!notifyGranted) {
-                PermissionRow("通知权限", "用于弹出开播提醒") {
-                    notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
+                PermissionRow(
+                    title = "通知权限",
+                    subtitle = "用于弹出开播提醒",
+                    onGrant = { notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+                    onClose = { dismissed = true }
+                )
             }
             if (!canOverlay) {
-                PermissionRow("悬浮窗权限", "用于后台自动跳转") {
-                    openOverlaySettings(context)
-                }
+                PermissionRow(
+                    title = "悬浮窗权限",
+                    subtitle = "用于后台自动跳转",
+                    onGrant = { openOverlaySettings(context) },
+                    onClose = { dismissed = true }
+                )
             }
             if (!canFullScreen) {
-                PermissionRow("全屏通知权限", "用于熄屏时弹出提醒") {
-                    openFullScreenSettings(context)
-                }
+                PermissionRow(
+                    title = "全屏通知权限",
+                    subtitle = "用于熄屏时弹出提醒",
+                    onGrant = { openFullScreenSettings(context) },
+                    onClose = { dismissed = true }
+                )
             }
             if (needBgPopup) {
-                PermissionRow("后台弹出界面权限", "用于后台弹出开播提醒") {
-                    openBackgroundLaunchSettings(context)
-                }
+                PermissionRow(
+                    title = "后台弹出界面权限",
+                    subtitle = "用于后台弹出开播提醒",
+                    onGrant = { openBackgroundLaunchSettings(context) },
+                    onClose = { dismissed = true }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PermissionRow(title: String, subtitle: String, onGrant: () -> Unit) {
+private fun PermissionRow(title: String, subtitle: String, onGrant: () -> Unit, onClose: () -> Unit) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -487,6 +501,7 @@ private fun PermissionRow(title: String, subtitle: String, onGrant: () -> Unit) 
             Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         TextButton(onClick = onGrant) { Text("去授权") }
+        TextButton(onClick = onClose) { Text("关闭") }
     }
 }
 
