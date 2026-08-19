@@ -1,6 +1,6 @@
 # Re: BiliLiveNotification
 ## Re：B站直播开播提醒
-[Windows](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe) | [Android](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/a1.2/Re.BLN_Android_1.2.apk) 下载  
+[Windows](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/v1.3/Re.BiliLiveNotification.exe) | [Android](https://github.com/SadYuyuko/ReBiliLiveNotification/releases/download/a1.3/Re.BLN_Android_1.3.apk) 下载  
 
 修改内容：  
  - 开机自启
