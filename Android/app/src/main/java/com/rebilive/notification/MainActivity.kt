@@ -429,17 +429,17 @@ private fun MenuItemText(text: String, onClick: () -> Unit) {
 @Composable
 fun PermissionGuideCard(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var resumeTick by remember { mutableStateOf(0) }
+    var checkTick by remember { mutableStateOf(0) }
     LifecycleResumeEffect(Unit) {
-        resumeTick++
+        checkTick++
         onPauseOrDispose { }
     }
-    resumeTick
-
-    var notifyGranted by remember { mutableStateOf(checkNotifyPermission(context)) }
     val notifyLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted -> notifyGranted = granted }
+    ) { checkTick++ }
+    checkTick
+
+    val notifyGranted = checkNotifyPermission(context)
     val canOverlay = Settings.canDrawOverlays(context)
     val canFullScreen = checkFullScreenPermission(context)
     val needBgPopup = isChineseRom()
