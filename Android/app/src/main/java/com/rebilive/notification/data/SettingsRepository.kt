@@ -44,6 +44,12 @@ class SettingsRepository(context: Context) {
 
     fun setServiceWasRunning(v: Boolean) = prefs.edit().putBoolean("service_was_running", v).apply()
 
+    fun nextLiveNotificationId(): Int {
+        val seq = prefs.getInt("live_notify_seq", 2000)
+        prefs.edit().putInt("live_notify_seq", if (seq >= 0x7FFFFFF0) 2000 else seq + 1).apply()
+        return seq
+    }
+
     fun exportToJson(): String {
         val obj = JSONObject()
         obj.put("room_ids", prefs.getString("room_ids", ""))

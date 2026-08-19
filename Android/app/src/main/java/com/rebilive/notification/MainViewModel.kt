@@ -33,7 +33,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val autoJumpEnabled = MutableStateFlow(settingsRepo.isAutoJumpEnabled())
     val apiUrl = MutableStateFlow(settingsRepo.getApiUrl())
     val hideToBackground = MutableStateFlow(settingsRepo.isHideToBackground())
-    val autoStart = MutableStateFlow(settingsRepo.isAutoStart())
 
     private val _roomStatusList = MutableStateFlow<List<RoomStatus>>(emptyList())
     val roomStatusList: StateFlow<List<RoomStatus>> = _roomStatusList
@@ -122,11 +121,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepo.setHideToBackground(v)
     }
 
-    fun setAutoStart(v: Boolean) {
-        autoStart.value = v
-        settingsRepo.setAutoStart(v)
-    }
-
     fun restoreDefaultApi() {
         apiUrl.value = SettingsRepository.DEFAULT_API_URL
     }
@@ -194,7 +188,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             autoJumpEnabled.value = settingsRepo.isAutoJumpEnabled()
             apiUrl.value = settingsRepo.getApiUrl()
             hideToBackground.value = settingsRepo.isHideToBackground()
-            autoStart.value = settingsRepo.isAutoStart()
             _importResult.value = "导入成功"
             refreshStatus()
         } catch (e: Exception) {

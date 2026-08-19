@@ -128,7 +128,8 @@ class BiliLiveService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun showLivePopup(rid: String, uname: String, faceUrl: String?, autoJump: Boolean) {
-        val requestCode = rid.hashCode() and 0x0FFFFFFF
+        val notificationId = settingsRepo.nextLiveNotificationId()
+        val requestCode = notificationId
         val intent = Intent(this, PopupActivity::class.java).apply {
             putExtra("rid", rid)
             putExtra("uname", uname)
@@ -141,7 +142,7 @@ class BiliLiveService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         getSystemService(NotificationManager::class.java)
-            .notify(requestCode, notificationHelper.getLiveNotification("开播提醒", "$uname 正在直播中", pendingIntent))
+            .notify(notificationId, notificationHelper.getLiveNotification("开播提醒", "$uname 正在直播中", pendingIntent))
     }
 
     private fun jumpToLive(rid: String) {

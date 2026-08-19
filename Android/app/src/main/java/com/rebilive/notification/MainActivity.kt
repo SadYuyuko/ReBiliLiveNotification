@@ -1,6 +1,7 @@
 package com.rebilive.notification
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -18,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -88,7 +90,6 @@ fun MainScreen(viewModel: MainViewModel) {
     val autoJumpEnabled by viewModel.autoJumpEnabled.collectAsState()
     val apiUrl by viewModel.apiUrl.collectAsState()
     val hideToBackground by viewModel.hideToBackground.collectAsState()
-    val autoStart by viewModel.autoStart.collectAsState()
     val roomStatusList by viewModel.roomStatusList.collectAsState()
     val isServiceRunning by viewModel.isServiceRunning.collectAsState()
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -150,36 +151,25 @@ fun MainScreen(viewModel: MainViewModel) {
                     }
                     DropdownMenu(
                         expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
+                        onDismissRequest = { showMenu = false },
+                        modifier = Modifier.width(84.dp)
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("导出") },
-                            onClick = {
-                                showMenu = false
-                                exportLauncher.launch("ReBLN_settings.json")
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("导入") },
-                            onClick = {
-                                showMenu = false
-                                importLauncher.launch(arrayOf("application/json"))
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("关于") },
-                            onClick = {
-                                showMenu = false
-                                showAboutDialog = true
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("检查更新") },
-                            onClick = {
-                                showMenu = false
-                                viewModel.checkForUpdates()
-                            }
-                        )
+                        MenuItemText("导出") {
+                            showMenu = false
+                            exportLauncher.launch("ReBLN_settings.json")
+                        }
+                        MenuItemText("导入") {
+                            showMenu = false
+                            importLauncher.launch(arrayOf("application/json"))
+                        }
+                        MenuItemText("关于") {
+                            showMenu = false
+                            showAboutDialog = true
+                        }
+                        MenuItemText("更新") {
+                            showMenu = false
+                            viewModel.checkForUpdates()
+                        }
                     }
                 }
             )
@@ -255,11 +245,24 @@ fun MainScreen(viewModel: MainViewModel) {
                     modifier = Modifier.weight(1f)
                 ) {
                     Switch(
-                        checked = autoStart,
-                        onCheckedChange = { viewModel.setAutoStart(it) }
+                        checked = hideToBackground,
+                        onCheckedChange = { enabled ->
+                            viewModel.setHideToBackground(enabled)
+                            val activity = context as? Activity
+                            if (activity != null) {
+                                activity.finish()
+                                val intent = Intent(activity, MainActivity::class.java).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    if (enabled) {
+                                        addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                                    }
+                                }
+                                activity.startActivity(intent)
+                            }
+                        }
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("开机自启", style = MaterialTheme.typography.bodySmall)
+                    Text("隐藏后台", style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -350,7 +353,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 Column(Modifier.widthIn(max = 400.dp)) {
                     SelectionContainer {
                         Text(
-                            text = "版本 v1.2\n" +
+                            text = "版本 v1.3\n" +
                                     "原作者 @yunhuanyx\n" +
                                     "原项目: github.com/yunhuanyx/biliLiveNotification\n" +
                                     "Re版: github.com/SadYuyuko/ReBiliLiveNotification"
@@ -378,6 +381,19 @@ fun MainScreen(viewModel: MainViewModel) {
                 }) { Text(if (updateResult!!.url != null) "确定" else "关闭") }
             }
         )
+    }
+}
+
+@Composable
+private fun MenuItemText(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
