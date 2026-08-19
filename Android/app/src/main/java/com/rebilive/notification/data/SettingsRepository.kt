@@ -50,6 +50,10 @@ class SettingsRepository(context: Context) {
         return seq
     }
 
+    fun isPermissionGuideDismissed(): Boolean = prefs.getBoolean("perm_guide_dismissed", false)
+
+    fun setPermissionGuideDismissed(v: Boolean) = prefs.edit().putBoolean("perm_guide_dismissed", v).apply()
+
     fun exportToJson(): String {
         val obj = JSONObject()
         obj.put("room_ids", prefs.getString("room_ids", ""))

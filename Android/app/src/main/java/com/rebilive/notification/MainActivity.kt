@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -444,7 +443,12 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
     val canOverlay = Settings.canDrawOverlays(context)
     val canFullScreen = checkFullScreenPermission(context)
     val needBgPopup = isChineseRom()
-    var dismissed by rememberSaveable { mutableStateOf(false) }
+    val settingsRepo = remember { SettingsRepository(context) }
+    var dismissed by remember { mutableStateOf(settingsRepo.isPermissionGuideDismissed()) }
+    val closeGuide = {
+        dismissed = true
+        settingsRepo.setPermissionGuideDismissed(true)
+    }
 
     if (dismissed || (notifyGranted && canOverlay && canFullScreen && !needBgPopup)) return
 
@@ -459,7 +463,7 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
                     title = "通知权限",
                     subtitle = "用于弹出开播提醒",
                     onGrant = { notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
-                    onClose = { dismissed = true }
+                    onClose = closeGuide
                 )
             }
             if (!canOverlay) {
@@ -467,7 +471,7 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
                     title = "悬浮窗权限",
                     subtitle = "用于后台自动跳转",
                     onGrant = { openOverlaySettings(context) },
-                    onClose = { dismissed = true }
+                    onClose = closeGuide
                 )
             }
             if (!canFullScreen) {
@@ -475,7 +479,7 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
                     title = "全屏通知权限",
                     subtitle = "用于熄屏时弹出提醒",
                     onGrant = { openFullScreenSettings(context) },
-                    onClose = { dismissed = true }
+                    onClose = closeGuide
                 )
             }
             if (needBgPopup) {
@@ -483,7 +487,7 @@ fun PermissionGuideCard(modifier: Modifier = Modifier) {
                     title = "后台弹出界面权限",
                     subtitle = "用于后台弹出开播提醒",
                     onGrant = { openBackgroundLaunchSettings(context) },
-                    onClose = { dismissed = true }
+                    onClose = closeGuide
                 )
             }
         }
