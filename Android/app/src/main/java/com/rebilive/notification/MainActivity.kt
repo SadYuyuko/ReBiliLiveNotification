@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rebilive.notification.data.SettingsRepository
 import com.rebilive.notification.notification.NotificationHelper
 
 class MainActivity : ComponentActivity() {
@@ -47,6 +48,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (SettingsRepository(this).isHideToBackground() &&
+            (intent.flags and Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) == 0
+        ) {
+            finish()
+            startActivity(
+                Intent(this, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                }
+            )
+            return
+        }
         enableEdgeToEdge()
         NotificationHelper(this).createChannels()
 
