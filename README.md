@@ -23,5 +23,5 @@
 <img width="250" height="172" alt="2" src="https://github.com/user-attachments/assets/ff246456-ad76-403c-a51c-3a4dfe58f524" />
 
 - Android  
-<img width="270" height="615" alt="3" src="https://github.com/user-attachments/assets/308efb96-8a15-4bb0-8b19-dc948f0c7975" />
-<img width="270" height="615" alt="4" src="https://github.com/user-attachments/assets/bd917409-8e5c-4a16-b1ed-2492ac232cf3" />
+<img width="270" height="615" alt="1" src="https://github.com/user-attachments/assets/f0df93b5-e63f-41d7-b7a1-0688be507e45" />
+<img width="270" height="615" alt="2" src="https://github.com/user-attachments/assets/1154962c-4644-4e26-be04-f34d2ea90740" />
