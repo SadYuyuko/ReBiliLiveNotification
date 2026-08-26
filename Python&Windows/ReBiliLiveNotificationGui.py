@@ -29,7 +29,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # 原作者 @yunhuanyx 
 # 原项目 https://github.com/yunhuanyx/biliLiveNotification
-# Re版修改 https://github.com/SadYuyuko/biliLiveNotification
+# Re版修改 https://github.com/SadYuyuko/ReBiliLiveNotification
 # 原图标未打包进来 使用ai绘制新图标代替
 
 if getattr(sys, 'frozen', False):
@@ -142,7 +142,7 @@ def show_about_window():
     about_content = f"""版本 v{APP_VERSION}
 原作者 @yunhuanyx 
 原项目 https://github.com/yunhuanyx/biliLiveNotification
-Re版修改 https://github.com/SadYuyuko/biliLiveNotification
+Re版修改 https://github.com/SadYuyuko/ReBiliLiveNotification
 配置文件位于 {config_path}
 """
     
