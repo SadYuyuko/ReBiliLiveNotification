@@ -292,7 +292,7 @@ def show_window():
 def check_for_updates():
     def _check():
         try:
-            url = "https://api.github.com/repos/SadYuyuko/biliLiveNotification/releases/latest"
+            url = "https://api.github.com/repos/SadYuyuko/ReBiliLiveNotification/releases/latest"
             resp = state.session.get(url, headers=headers, timeout=10, verify=False)
             resp.raise_for_status()
             data = resp.json()
