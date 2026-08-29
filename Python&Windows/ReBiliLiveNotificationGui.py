@@ -40,7 +40,7 @@ user_config_dir = os.path.join(os.path.expanduser('~'), '.ReBiliLiveNotification
 os.makedirs(user_config_dir, exist_ok=True)
 config_path = os.path.join(user_config_dir, 'ReBLN.ini')
 
-APP_VERSION = "1.3"
+APP_VERSION = "1.4"
 
 # UA
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0"}
