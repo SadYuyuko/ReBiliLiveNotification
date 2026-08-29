@@ -30,7 +30,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 原作者 @yunhuanyx 
 # 原项目 https://github.com/yunhuanyx/biliLiveNotification
 # Re版修改 https://github.com/SadYuyuko/ReBiliLiveNotification
-# 原图标未打包进来 使用ai绘制新图标代替
+# 图标与Android版一致：白色圆角背景 + 蓝色播放三角
 
 if getattr(sys, 'frozen', False):
     app_dir = os.path.dirname(sys.executable)
@@ -115,8 +115,6 @@ def show_about_window():
     x = (screen_width // 2) - (window_width // 2)
     y = (screen_height // 2) - (window_height // 2) - 50
     about_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
-    
-    about_window.iconphoto(True, ico_img)
     
     main_frame = ttk.Frame(about_window)
     main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
@@ -423,7 +421,6 @@ def show_notification_window(rid, uname, uid):
     y = (screen_height // 2) - (window_height // 2) - 50
     notification_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-    notification_window.iconphoto(True, ico_img)
     notification_window.focus_force()
 
     try:
@@ -795,15 +792,13 @@ if __name__ == "__main__":
     
     root.resizable(False, False)
     
-    # 图标
-    if getattr(sys, 'frozen', False):
-        ico_path = os.path.join(sys._MEIPASS, 'ReBiliLiveNotification.ico')
-        icon_image = Image.open(ico_path)
-    else:
-        from icon_module import create_microphone_icon
-        icon_image = create_microphone_icon()
-    ico_img = ImageTk.PhotoImage(icon_image)
-    root.iconphoto(True, ico_img)
+    # 图标（托盘与窗口标题栏共用）
+    from icon_module import create_android_icon
+    icon_image = create_android_icon()
+    try:
+        root.iconphoto(True, ImageTk.PhotoImage(icon_image))
+    except Exception:
+        pass
     
     # grid布局
     main_control_frame = ttk.Frame(root)
