@@ -30,7 +30,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 原作者 @yunhuanyx 
 # 原项目 https://github.com/yunhuanyx/biliLiveNotification
 # Re版修改 https://github.com/SadYuyuko/ReBiliLiveNotification
-# 图标与Android版一致：白色圆角背景 + 蓝色播放三角
 
 if getattr(sys, 'frozen', False):
     app_dir = os.path.dirname(sys.executable)
@@ -792,7 +791,7 @@ if __name__ == "__main__":
     
     root.resizable(False, False)
     
-    # 图标（托盘与窗口标题栏共用）
+    # 图标
     from icon_module import create_android_icon
     icon_image = create_android_icon()
     try:
