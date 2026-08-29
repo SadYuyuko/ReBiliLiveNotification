@@ -2,7 +2,6 @@ from PIL import Image, ImageDraw
 
 
 def create_android_icon(size=256):
-    """Android版启动图标：白色圆形背景 + 蓝色播放三角(#00A1D6)"""
     image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
 
